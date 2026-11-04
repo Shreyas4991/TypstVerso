@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Incrementally extract requested Lean code and export a Typst document."""
 import argparse
+from contextlib import contextmanager
+import errno
 import hashlib
 import html
 import json
@@ -23,15 +25,62 @@ MODULES = ["LeanProject"]
 REQUEST_PREFIX = "LEAN_REQUEST:"
 
 
+class ProcessFailure(subprocess.CalledProcessError):
+    def __str__(self):
+        return (self.stderr or self.stdout or "").strip() or super().__str__()
+
+
 def run(args, cwd=PROJECT, capture=False, env=None, input=None):
-    try:
-        return subprocess.run([str(a) for a in args], cwd=cwd, check=True, text=True,
-                              input=input, stdout=subprocess.PIPE if capture else None,
-                              env=env).stdout
-    except subprocess.CalledProcessError as error:
-        if capture and error.stdout:
-            print(error.stdout, end="", file=sys.stderr)
-        raise
+    command = [str(a) for a in args]
+    result = subprocess.run(command, cwd=cwd, text=True, input=input,
+                            stdout=subprocess.PIPE if capture else None,
+                            stderr=subprocess.PIPE if capture else None, env=env)
+    if result.returncode:
+        raise ProcessFailure(result.returncode, command, output=result.stdout, stderr=result.stderr)
+    if capture and result.stderr:
+        print(result.stderr, end="", file=sys.stderr)
+    return result.stdout
+
+
+@contextmanager
+def build_lock(library):
+    """Serialize builders sharing data; the OS releases this lock after a crash."""
+    library.mkdir(parents=True, exist_ok=True)
+    with (library / ".build.lock").open("a+b") as lock:
+        if os.name == "nt":
+            import msvcrt
+            if lock.seek(0, os.SEEK_END) == 0:
+                lock.write(b"0")
+                lock.flush()
+            waiting = False
+            while True:
+                lock.seek(0)
+                try:
+                    msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError as error:
+                    if error.errno not in {errno.EACCES, errno.EAGAIN, errno.EDEADLK}:
+                        raise
+                    if not waiting:
+                        print("Waiting for another build to finish...", flush=True)
+                        waiting = True
+                    time.sleep(0.1)
+            try:
+                yield
+            finally:
+                lock.seek(0)
+                msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            try:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                print("Waiting for another build to finish...", flush=True)
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
 
 def write_json(path, value):
@@ -40,9 +89,14 @@ def write_json(path, value):
     content = json.dumps(value, ensure_ascii=False, indent=2) + "\n"
     if path.is_file() and path.read_text() == content:
         return
-    temporary = path.with_suffix(".tmp")
-    temporary.write_text(content)
-    temporary.replace(path)
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", prefix=".lean-", suffix=".tmp",
+                                     dir=path.parent, delete=False) as stream:
+        temporary = Path(stream.name)
+        stream.write(content)
+    try:
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def quote_lines(fragments):
@@ -96,7 +150,10 @@ def source_snapshot(project):
                 if (name.endswith((".lean", ".patch")) or
                         name in {"lakefile.toml", "lake-manifest.json", "lean-toolchain"}):
                     path = Path(directory) / name
-                    stat = path.stat()
+                    try:
+                        stat = path.stat()
+                    except FileNotFoundError:
+                        continue
                     paths.append((str(path.relative_to(project)), stat.st_mtime_ns, stat.st_size))
     return sorted(paths)
 
@@ -154,6 +211,10 @@ class Builder:
             raise ValueError("Provide valid Lean module names with --module")
         self.formats = formats
         self.path = self.library / "lean.json"
+        self.refresh = refresh
+        self.load_cache(refresh)
+
+    def load_cache(self, refresh=False):
         self.ready = False
         self.built_modules = set()
         self.env = None
@@ -246,7 +307,16 @@ class Builder:
         if pending:
             self.prepare(r["module"] for r in pending if r["module"] is not None)
             print(f"Evaluating {len(pending)} Lean command(s)", flush=True)
-            commands = self.bridge(["--commands"], {"modules": self.modules, "commands": pending})
+            groups = {}
+            for request in pending:
+                groups.setdefault(request["module"], []).append(request)
+            commands = []
+            for module, requests in groups.items():
+                # Importing Mathlib registers global Lean extensions. Reusing an
+                # older environment afterwards can panic inside Lean. Keep distinct
+                # import contexts in separate processes, including their initial import.
+                commands.extend(self.bridge(["--commands"], {
+                    "modules": self.modules if module is None else [module], "commands": requests}))
             for command in commands:
                 self.data["inlineCommands"].append({
                     "module": command["module"], "source": command["source"],
@@ -341,6 +411,13 @@ class Builder:
                   f" ({len(regions)} Lean hover regions)", flush=True)
 
     def build(self, entry="main.typ", extract_only=False):
+        with build_lock(self.library):
+            # A different process may have updated the data while this one waited.
+            self.load_cache(self.refresh)
+            self.refresh = False
+            self.build_locked(entry, extract_only)
+
+    def build_locked(self, entry="main.typ", extract_only=False):
         entry = (self.document / entry).resolve()
         if not entry.is_file() or not entry.is_relative_to(self.document):
             raise ValueError("The entry file must be inside the document project")
@@ -404,18 +481,26 @@ def annotate_pdf(source, target, regions):
 def watch_snapshot(project, document, library=LIBRARY, templates=TEMPLATES):
     paths = [(str(Path(__file__)), Path(__file__).stat().st_mtime_ns, Path(__file__).stat().st_size)]
     paths += source_snapshot(project)
-    for directory, dirs, files in os.walk(document):
-        dirs[:] = sorted(d for d in dirs if d not in {".git", ".venv", "build", "__pycache__"})
-        for name in sorted(files):
-            if name == "lean.json":
-                continue
-            path = Path(directory) / name
-            stat = path.stat()
-            paths.append((str(path), stat.st_mtime_ns, stat.st_size))
+    documents = [document] if isinstance(document, (str, os.PathLike)) else document
+    for root in documents:
+        for directory, dirs, files in os.walk(root):
+            dirs[:] = sorted(d for d in dirs if d not in {".git", ".venv", "build", "__pycache__"})
+            for name in sorted(files):
+                if name == "lean.json":
+                    continue
+                path = Path(directory) / name
+                try:
+                    stat = path.stat()
+                except FileNotFoundError:
+                    continue
+                paths.append((str(path), stat.st_mtime_ns, stat.st_size))
     for base in (library, templates):
         for path in sorted(Path(base).rglob("*")):
-            if path.is_file() and path.name != "lean.json":
-                stat = path.stat()
+            if path.is_file() and path.name not in {"lean.json", ".build.lock"} and path.suffix != ".tmp":
+                try:
+                    stat = path.stat()
+                except FileNotFoundError:
+                    continue
                 paths.append((str(path), stat.st_mtime_ns, stat.st_size))
     return paths
 
@@ -424,7 +509,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("entry", nargs="?", default="main.typ")
     parser.add_argument("--project", type=Path, default=PROJECT)
-    parser.add_argument("--document", type=Path, default=DOCUMENT)
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--document", type=Path, default=DOCUMENT)
+    selection.add_argument("--all", action="store_true", help="Build slides, article, and book")
     parser.add_argument("--output", type=Path, help="Output directory (default: DOCUMENT/build)")
     parser.add_argument("--library", type=Path, default=LIBRARY, help="Shared lean.typ and extraction cache")
     parser.add_argument("--templates", type=Path, default=TEMPLATES, help="HTML template directory")
@@ -435,25 +522,31 @@ def main(argv=None):
     parser.add_argument("--refresh", action="store_true", help="Discard the extraction cache once")
     parser.add_argument("--watch", action="store_true")
     args = parser.parse_args(argv)
+    documents = [ROOT / "documents" / kind for kind in DOCUMENT_KINDS] if args.all else [args.document]
     previous = None
     loaded_script = Path(__file__).stat().st_mtime_ns
     while True:
         if args.watch and Path(__file__).stat().st_mtime_ns != loaded_script:
             os.execv(sys.executable, [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]])
-        current = watch_snapshot(args.project.resolve(), args.document.resolve(), args.library, args.templates)
+        current = watch_snapshot(args.project.resolve(), [p.resolve() for p in documents],
+                                 args.library, args.templates)
+        failed = False
         if current != previous:
             previous = current
-            try:
-                Builder(args.project, args.document, args.output, args.modules,
-                        args.refresh, args.format, args.library, args.templates,
-                        args.template).build(args.entry, args.extract_only)
-            except (subprocess.CalledProcessError, RuntimeError, ValueError, OSError) as error:
-                print(f"Build failed: {error}", file=sys.stderr)
-                if not args.watch:
-                    return 1
+            refresh = args.refresh
+            for document in documents:
+                output = args.output / document.name if args.all and args.output else args.output
+                try:
+                    builder = Builder(args.project, document, output, args.modules,
+                                      refresh, args.format, args.library, args.templates, args.template)
+                    refresh = False
+                    builder.build(args.entry, args.extract_only)
+                except (subprocess.CalledProcessError, RuntimeError, ValueError, OSError) as error:
+                    failed = True
+                    print(f"Build failed ({document.name}): {error}", file=sys.stderr)
             args.refresh = False
         if not args.watch:
-            return 0
+            return int(failed)
         time.sleep(0.5)
 
 

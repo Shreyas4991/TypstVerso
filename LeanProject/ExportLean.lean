@@ -145,7 +145,7 @@ unsafe def resolveDeclarations : IO Unit := do
   let mut resolved := #[]
   for name in names do
     let some index := env.getModuleIdxFor? name.toName
-      | throw <| IO.userError s!"Declaration '{name}' is not available. Use its fully qualified Lean name and import its module in LeanProject.lean."
+      | throw <| IO.userError s!"Declaration '{name}' is not available from the imported Lean files. Check its full name and the imports in LeanProject.lean. If its file starts with 'module', add '@[expose] public section' before the definitions you want to use in documents."
     resolved := resolved.push (name, Json.str env.header.moduleNames[index.toNat]!.toString)
   writePayload "-" (Json.mkObj resolved.toList).compress
 

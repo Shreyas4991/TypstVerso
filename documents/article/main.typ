@@ -13,9 +13,8 @@
 ]
 
 #block(inset: (x: 12pt), width: 100%)[
-  *Abstract.* This sample article connects mathematical prose with checked Lean
-  declarations. Code, intermediate goals, and command results all come from the
-  same Lean project and inherit the article's font size.
+  *Abstract.* We prove that every proposition implies itself. A Lean proof and
+  its intermediate goals show how the argument works, one step at a time.
 ]
 
 = A definition

@@ -12,7 +12,7 @@
 
 #page(numbering: none)[
   #align(center + horizon)[
-    #text(size: 27pt, weight: "bold")[An introduction to checked arguments]
+    #text(size: 27pt, weight: "bold")[An introduction to\ LEAN-checked arguments]
 
     #v(1cm)
     A Lean + Typst sample book
@@ -26,9 +26,8 @@
 
 = From definitions to proofs
 
-This book introduces a small checked argument, then returns to the proof to
-inspect its intermediate goals. The HTML edition presents the pages in a
-scrolling reader; the PDF edition retains the book's typeset layout.
+This book introduces a small checked argument. We first write down a proof,
+then look at the steps Lean uses to check it.
 
 == A first definition
 
@@ -65,9 +64,19 @@ We can check the theorem's type without duplicating its statement:
 
 #lean-command("#check Demo.identity_pair")
 
-Evaluation also uses the imported Lean environment:
+Lean can also calculate the value of an expression:
 
 #lean-command("#eval (2 + 2)")
 
-These quotations and command results share the same extraction cache as the
-article and slide examples.
+
+The result is 4, as expected.
+
+== Simple Graphs
+
+Here's a simple graph in mathlib
+
+#lean-command("#print SimpleGraph")
+
+Here's the type of the function that gets its neighbor set for a given vertex `v`
+
+#lean-command("#check SimpleGraph.neighborSet")

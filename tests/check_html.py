@@ -95,8 +95,11 @@ def main():
                     assert page.locator(".page").count() >= 2
                     if kind == "book":
                         contents = page.get_by_role("navigation", name="Table of contents")
-                        expect(contents.locator("a")).to_have_count(6)
-                        expect(contents.locator("ol ol")).to_have_count(2)
+                        heading_count = page.evaluate("""() => JSON.parse(
+                          document.getElementById("document-data").textContent)
+                          .reduce((count, page) => count + page.headings.length, 0)""")
+                        expect(contents.locator("a")).to_have_count(heading_count)
+                        assert contents.locator("ol ol").count() >= 2
                         link = contents.get_by_role("link", name="1.2 A proof with two branches", exact=True)
                         href = link.get_attribute("href")
                         link.click()

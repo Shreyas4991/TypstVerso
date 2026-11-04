@@ -1,3 +1,9 @@
+module
+
+public import Mathlib
+
+@[expose] public section
+
 namespace Demo
 
 /-- A small definition to quote from Typst. -/
@@ -10,5 +16,7 @@ theorem identity_pair (p q : Prop) :
   all_goals
     intro h
     exact h
+
+#check SimpleGraph
 
 end Demo
