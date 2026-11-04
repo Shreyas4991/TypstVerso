@@ -162,6 +162,23 @@ def request_key(request):
     return json.dumps(request, ensure_ascii=False, sort_keys=True)
 
 
+def request_description(request):
+    if request["kind"] == "declaration":
+        return "the Lean definition or proof " + json.dumps(request["name"], ensure_ascii=False)
+    description = "the Lean command " + json.dumps(request["source"], ensure_ascii=False)
+    if request.get("module") is not None:
+        description += " from " + json.dumps(request["module"], ensure_ascii=False)
+    return description
+
+
+def recovery_error(request):
+    return ("Error: The result for " + request_description(request) + " is still missing after a rebuild.\n\n"
+            "Probable cause: The saved Lean results could not be updated, or this document is reading a different copy.\n\n"
+            "Probable fix: Check the build.py terminal for errors. From the folder containing build.py, run:\n"
+            ".venv/bin/python build.py --all --refresh\n"
+            "Then keep it running with:\n.venv/bin/python build.py --watch --all")
+
+
 def validate_request(request):
     if not isinstance(request, dict):
         raise ValueError("Invalid Lean extraction request")
@@ -181,12 +198,33 @@ class TypstFailure(RuntimeError):
         super().__init__(result.stderr.strip())
 
     def missing_request(self):
+        decoder = json.JSONDecoder()
         for line in self.diagnostics.splitlines():
-            if "error:" not in line or REQUEST_PREFIX not in line:
+            if "error:" not in line:
                 continue
             try:
-                request, _ = json.JSONDecoder().raw_decode(line.split(REQUEST_PREFIX, 1)[1])
-                return validate_request(request)
+                message = line.split("error:", 1)[1].strip()
+                for wrapper in ("assertion failed: ", "panicked with: "):
+                    if message.startswith(wrapper):
+                        message = message[len(wrapper):]
+                for prefix, kind in (("Error: The Lean definition or proof ", "declaration"),
+                                     ("Error: The Lean command ", "command")):
+                    if not message.startswith(prefix):
+                        continue
+                    payload = message[len(prefix):]
+                    value, end = decoder.raw_decode(payload)
+                    if kind == "declaration":
+                        return validate_request({"kind": kind, "name": value})
+                    module = None
+                    rest = payload[end:]
+                    if " Lean file: " in rest:
+                        module, _ = decoder.raw_decode(rest.split(" Lean file: ", 1)[1])
+                    return validate_request({"kind": kind, "source": value, "module": module})
+                # Older copies of lean.typ used a JSON diagnostic. New messages
+                # are readable sentences, with quoted names sufficient for recovery.
+                if REQUEST_PREFIX in line:
+                    request, _ = decoder.raw_decode(line.split(REQUEST_PREFIX, 1)[1])
+                    return validate_request(request)
             except (ValueError, TypeError):
                 continue
         return None
@@ -435,11 +473,11 @@ class Builder:
                     raise
                 key = request_key(request)
                 if key in attempted:
-                    raise RuntimeError("Typst still reports missing data after extraction: " + key) from error
+                    raise RuntimeError(recovery_error(request)) from error
                 attempted.add(key)
-                print("Typst requested missing Lean data; extracting and retrying: " + key, flush=True)
+                print("Preparing the missing result for " + request_description(request) + " and rebuilding...", flush=True)
                 if not self.ensure_requests([request]):
-                    raise RuntimeError("Missing-data diagnostic made no extraction progress: " + key) from error
+                    raise RuntimeError(recovery_error(request)) from error
         raise RuntimeError("Stopped after 32 missing-data retries; check document-dependent requests")
 
 

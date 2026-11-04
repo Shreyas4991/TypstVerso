@@ -6,7 +6,27 @@
 } else { json("lean.json") }
 
 #let lean-request(request) = metadata((kind: "lean-request", request: request))
-#let lean-missing(request) = panic("LEAN_REQUEST:" + json.encode(request, pretty: false))
+#let lean-build-fix = "If build.py is already running, wait about a minute for it to update the saved Lean results, then save this Typst file again. Check its terminal for errors.\n\nIf it is not running, open a terminal in the folder containing build.py and run:\n.venv/bin/python build.py --watch --all\n\nTo build once instead, run:\n.venv/bin/python build.py --all\n\nOn Windows, use .venv\\Scripts\\python.exe instead of .venv/bin/python."
+
+#let lean-error(error, cause, fix) = assert(false, message:
+  "Error: " + error + "\n\nProbable cause: " + cause + "\n\nProbable fix: " + fix)
+
+#let lean-missing(request) = {
+  let error = if request.kind == "declaration" {
+    "The Lean definition or proof " + json.encode(request.name, pretty: false) + " is not ready to display."
+  } else {
+    let file = if request.module == none { "" } else { " Lean file: " + json.encode(request.module, pretty: false) + "." }
+    "The Lean command " + json.encode(request.source, pretty: false) + " has no saved result yet." + file
+  }
+  lean-error(error,
+    "build.py has not prepared this result yet. It may still be working, may have stopped after an error, or may not be running.",
+    lean-build-fix)
+}
+
+#let lean-refresh() = lean-error(
+  "The saved Lean results need to be updated.",
+  "They were created by an older version of the template or do not contain the information this document needs.",
+  lean-build-fix + "\n\nIf rebuilding does not help, run:\n.venv/bin/python build.py --all --refresh")
 
 #let lean-hover(body, tooltip, kind: "token") = context {
   if tooltip == "" { body } else {
@@ -107,7 +127,7 @@
   let request = (kind: "declaration", name: name)
   if lean-discover { return lean-request(request) }
   assert(type(indent) == ratio and indent >= 0%, message: "indent must be a nonnegative percentage, such as 50%")
-  assert(lean-data.schemaVersion == 1, message: "Rebuild Lean quotations with build.py")
+  if lean-data.at("schemaVersion", default: none) != 1 { lean-refresh() }
   if name not in lean-data.declarations { lean-missing(request) }
   let lines = lean-data.declarations.at(name).lines
   let last = if last == none { lines.len() } else { last }
@@ -127,7 +147,7 @@
 #let lean-command(code, module: none, occurrence: 1, output: true, size: 1em, output-size: none) = {
   let request = (kind: "command", source: code.trim(), module: module, occurrence: occurrence)
   if lean-discover { return lean-request(request) }
-  assert("commands" in lean-data, message: "Refresh Lean commands: run python3 build.py from the project root.")
+  if "commands" not in lean-data { lean-refresh() }
   let matches = lean-data.commands.filter(command => command.source.trim() == code.trim() and
     (module == none or command.module == module))
   if matches.len() == 0 {
@@ -159,13 +179,13 @@
 #let lean-state(name, index: 1, size: 1em) = {
   let request = (kind: "declaration", name: name)
   if lean-discover { return lean-request(request) }
-  assert(lean-data.schemaVersion == 1, message: "Rebuild Lean quotations with build.py")
+  if lean-data.at("schemaVersion", default: none) != 1 { lean-refresh() }
   if name not in lean-data.declarations { lean-missing(request) }
   let declaration = lean-data.declarations.at(name)
   let states = declaration.lines.flatten().filter(p => p.kind == "state")
   let info = if states.len() > 0 {
     assert(index >= 1 and index <= states.len(), message: "Proof-state index out of range for " + name + ": choose an index from 1 to " + str(states.len()) + ".")
-    assert("fragments" in states.at(index - 1), message: "Refresh highlighted proof states: run python3 build.py --refresh.")
+    if "fragments" not in states.at(index - 1) { lean-refresh() }
     states.at(index - 1).fragments
   } else {
     assert(index == 1, message: name + " has declaration type information only; use index: 1.")
@@ -174,7 +194,7 @@
     } else {
       // Older snapshots already carry the signature in the name's hover information.
       let names = declaration.lines.flatten().filter(p => p.at("definitionName", default: "") == name and "signatureFragments" in p)
-      assert(names.len() > 0, message: "Refresh highlighted declaration types: run python3 build.py --refresh.")
+      if names.len() == 0 { lean-refresh() }
       names.first().signatureFragments
     }
   }

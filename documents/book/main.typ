@@ -81,4 +81,5 @@ Here's the type of the function that gets its neighbor set for a given vertex `v
 
 #lean-command("#check SimpleGraph.neighborSet")
 
+Just randomly checking Nat's type next. 
 #lean-command("#check Nat")

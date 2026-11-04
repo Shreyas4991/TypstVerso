@@ -150,7 +150,7 @@ class RecoveryControl(unittest.TestCase):
             with patch.object(b, "discover", return_value=[]), \
                     patch.object(b, "ensure_requests", return_value=False), \
                     patch.object(b, "export", side_effect=error) as export:
-                with self.assertRaisesRegex(RuntimeError, "no extraction progress"):
+                with self.assertRaisesRegex(RuntimeError, "still missing after a rebuild"):
                     b.build()
             self.assertEqual(export.call_count, 1)
 

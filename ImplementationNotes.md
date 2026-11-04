@@ -1,7 +1,7 @@
 # Implementation notes
 
 For setup instructions and where to start writing, see [README.md](README.md).
-This file explains how the code works and how to change it.
+This file explains how the code works and how to change it. These notes are AI-pilled. Don't read them if you dislike AI text.
 
 ## Terms used below
 
@@ -130,9 +130,16 @@ size with `#set text(size: ...)`; no per-quotation overrides are needed. Use
    declarations, groups them by defining module, and invokes SubVerso only for
    those declarations. Missing commands are evaluated together.
 3. Python replaces the cache file after its updated contents are ready and runs Typst for the final export.
-4. If a final pass encounters another missing item, `lean.typ` emits a tagged
-   `LEAN_REQUEST` diagnostic. Python extracts that item and retries automatically.
+4. If a final pass encounters another missing item, `lean.typ` reports the error,
+   probable cause, and probable fix in plain language. Python reads the quoted
+   name or command from that message, extracts the item, and retries automatically.
    Repeated requests that make no progress stop with an error instead of looping.
+
+Missing-result messages suggest waiting about a minute if `build.py` is already
+running, checking its terminal for errors, and saving the Typst file again. They
+also include the commands to start continuous rebuilding or build once. No JSON
+request is shown to the user. The reader still understands older `LEAN_REQUEST`
+messages for documents using an older copy of `lean.typ`.
 
 Prose, styling, and page layout changes reuse the cached Lean results. New
 quotations only add missing data. Changes to the Lean project, dependency sources,
