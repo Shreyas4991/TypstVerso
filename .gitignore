@@ -3,4 +3,5 @@ __pycache__/
 build/
 LeanProject/.lake/
 typst/lean.json
+typst/.build.lock
 .DS_Store
