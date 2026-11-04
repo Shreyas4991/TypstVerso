@@ -28,12 +28,14 @@ likely to render tooltips more reliably.
 | Book | [HTML](https://shreyas4991.github.io/TypstVerso/documents/book/build/main.html) | [PDF](https://shreyas4991.github.io/TypstVerso/documents/book/build/main.pdf) |
 | Slides | [HTML](https://shreyas4991.github.io/TypstVerso/documents/slides/build/main.html) | [PDF](https://shreyas4991.github.io/TypstVerso/documents/slides/build/main.pdf) |
 
-The website updates automatically when changes to these compiled samples or
-`index.html` are pushed to `main`. After editing a template, run
+The website updates automatically when changes are pushed to `main`.
+After editing a template, run
 `.venv/bin/python build.py --all` and commit its updated HTML and PDF files to
 refresh the published examples.
 
 ## First Time Setup
+
+These steps are also available on the [tutorial page](https://shreyas4991.github.io/TypstVerso/tutorial.html).
 
 ### 1. Check the required installations
 

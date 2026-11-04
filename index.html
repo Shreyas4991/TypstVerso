@@ -18,41 +18,9 @@ limitations under the License.
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="verso style lean rendering for typst. Compiled examples and repository setup instructions.">
+  <meta name="description" content="verso style lean rendering for typst. Compiled examples and a link to the setup tutorial.">
   <title>Write Lean Code into Typst</title>
-  <style>
-    * { box-sizing: border-box; }
-    html { color-scheme: light; }
-    body { margin: 0; background: #faf9f6; color: #242c2b; font: 17px/1.65 system-ui, sans-serif; }
-    main, footer { width: min(100% - 40px, 840px); margin-inline: auto; }
-    header { padding: 76px 0 36px; }
-    .project { margin: 0 0 16px; color: #52615d; font-size: 14px; letter-spacing: .08em; }
-    h1 { margin: 0 0 20px; font-size: clamp(32px, 6vw, 50px); line-height: 1.15; letter-spacing: -.04em; }
-    header p { max-width: 650px; }
-    a { color: #176958; text-underline-offset: 4px; }
-    a:hover { color: #103e35; }
-    a:focus-visible { outline: 3px solid #176958; outline-offset: 5px; border-radius: 2px; }
-    .source { display: inline-block; margin-top: 8px; }
-    article { display: grid; grid-template-columns: 120px 1fr auto; align-items: baseline; gap: 24px; padding: 28px 0; border-top: 1px solid #d9dfda; }
-    h2 { margin: 0; font-size: 22px; font-weight: 600; }
-    article p { margin: 0; color: #52615d; font-size: 16px; }
-    .links { display: flex; flex-wrap: wrap; gap: 16px; white-space: nowrap; }
-    .links a { font-size: 16px; }
-    .note { margin: 12px 0 0; padding-top: 24px; border-top: 1px solid #d9dfda; color: #52615d; font-size: 15px; }
-    .tutorial { margin-top: 36px; padding-top: 28px; border-top: 1px solid #d9dfda; }
-    .tutorial ol { padding-left: 24px; }
-    .tutorial li { margin-top: 28px; }
-    .tutorial h3 { margin-bottom: 8px; font-size: 18px; }
-    .tutorial p { margin-block: 12px; }
-    code { font-size: .88em; }
-    pre { padding: 16px; overflow-x: auto; background: #f0efeb; border-radius: 4px; line-height: 1.6; }
-    footer { display: flex; flex-wrap: wrap; gap: 8px 24px; padding-block: 48px 32px; color: #52615d; font-size: 14px; }
-    @media (max-width: 640px) {
-      header { padding-top: 44px; }
-      article { grid-template-columns: 1fr; gap: 8px; }
-      .links { margin-top: 8px; }
-    }
-  </style>
+  <link rel="stylesheet" href="site.css">
 </head>
 <body>
   <main>
@@ -60,7 +28,10 @@ limitations under the License.
       <p class="project">TypstVerso</p>
       <h1>Write Lean Code into Typst</h1>
       <p>verso style lean rendering for typst</p>
-      <a class="source" href="https://github.com/Shreyas4991/TypstVerso">Get the templates on GitHub &rarr;</a>
+      <nav aria-label="Project links">
+        <a class="source" href="https://github.com/Shreyas4991/TypstVerso">Get the templates on GitHub &rarr;</a>
+        <a class="source" href="tutorial.html">Tutorial</a>
+      </nav>
     </header>
     <section aria-label="Sample documents">
       <article>
@@ -94,60 +65,6 @@ limitations under the License.
       Use the PDF links for reading or printing.</p>
     <p class="note">PDF tooltip rendering depends heavily on the PDF reader.
       The HTML version is likely to render tooltips more reliably.</p>
-    <section class="tutorial" aria-labelledby="tutorial-title">
-      <h2 id="tutorial-title">How to use the repository</h2>
-      <ol>
-        <li>
-          <h3>Check the required installations</h3>
-          <p>Install <a href="https://lean-lang.org/install/">Lean</a> with elan and Lake,
-            <a href="https://typst.app/open-source/">Typst</a> 0.15 or later,
-            <a href="https://www.python.org/downloads/">Python</a> 3.9 or later,
-            and <a href="https://git-scm.com/downloads/">Git</a>.
-            Check that these commands work in your terminal:</p>
-          <pre><code>lean --version
-lake --version
-typst --version
-python3 --version
-git --version</code></pre>
-          <p>On Windows, use <code>py --version</code> for Python.
-            If a command is missing, complete that tool's installation before continuing.</p>
-        </li>
-        <li>
-          <h3>Create a repository from the template</h3>
-          <p>On <a href="https://github.com/Shreyas4991/TypstVerso">GitHub</a>,
-            select <strong>Use this template &rarr; Create a new repository</strong>.
-            Choose an owner and name, then create the repository.</p>
-          <p>Clone your new repository and enter its folder. Replace
-            <code>YOUR-USER</code> and <code>YOUR-REPO</code> below:</p>
-          <pre><code>git clone https://github.com/YOUR-USER/YOUR-REPO.git
-cd YOUR-REPO</code></pre>
-        </li>
-        <li>
-          <h3>Install the Python dependency and build</h3>
-          <p>Run these commands from the repository folder, which contains <code>build.py</code>.</p>
-          <p>On macOS or Linux:</p>
-          <pre><code>python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python build.py --all</code></pre>
-          <p>On Windows:</p>
-          <pre><code>py -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe build.py --all</code></pre>
-          <p>The first build downloads Lean dependencies and may take a while.
-            Open <code>main.html</code> or <code>main.pdf</code> in each template's
-            <code>documents/article/build/</code>, <code>documents/book/build/</code>,
-            or <code>documents/slides/build/</code> folder.</p>
-          <p>Edit the corresponding <code>main.typ</code> file in <code>documents/</code>
-            and put your Lean code in <code>LeanProject/LeanProject/Basic.lean</code>.
-            To rebuild when files change, run:</p>
-          <pre><code>.venv/bin/python build.py --watch --all</code></pre>
-          <p>On Windows, replace <code>.venv/bin/python</code> with
-            <code>.venv\Scripts\python.exe</code>. Leave the command running while you
-            edit, refresh the HTML in your browser after a rebuild, and press
-            <code>Ctrl+C</code> to stop it.</p>
-        </li>
-      </ol>
-    </section>
   </main>
   <footer>
     <span>&copy; 2026 Shreyas Srinivas</span>

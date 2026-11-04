@@ -1,0 +1,94 @@
+<!doctype html>
+<!--
+Copyright 2026 Shreyas Srinivas
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Check installations, create a repository from the template, and build the documents.">
+  <title>Tutorial — Write Lean Code into Typst</title>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="project">TypstVerso</p>
+      <h1>How to use the repository</h1>
+      <nav aria-label="Project links">
+        <a class="source" href="./">&larr; Samples</a>
+        <a class="source" href="https://github.com/Shreyas4991/TypstVerso">GitHub repository</a>
+      </nav>
+    </header>
+    <section class="tutorial" aria-label="Setup steps">
+      <ol>
+        <li>
+          <h2>Check the required installations</h2>
+          <p>Install <a href="https://lean-lang.org/install/">Lean</a> with elan and Lake,
+            <a href="https://typst.app/open-source/">Typst</a> 0.15 or later,
+            <a href="https://www.python.org/downloads/">Python</a> 3.9 or later,
+            and <a href="https://git-scm.com/downloads/">Git</a>.
+            Check that these commands work in your terminal:</p>
+          <pre><code>lean --version
+lake --version
+typst --version
+python3 --version
+git --version</code></pre>
+          <p>On Windows, use <code>py --version</code> for Python.
+            If a command is missing, complete that tool's installation before continuing.</p>
+        </li>
+        <li>
+          <h2>Create a repository from the template</h2>
+          <p>On <a href="https://github.com/Shreyas4991/TypstVerso">GitHub</a>,
+            select <strong>Use this template &rarr; Create a new repository</strong>.
+            Choose an owner and name, then create the repository.</p>
+          <p>Clone your new repository and enter its folder. Replace
+            <code>YOUR-USER</code> and <code>YOUR-REPO</code> below:</p>
+          <pre><code>git clone https://github.com/YOUR-USER/YOUR-REPO.git
+cd YOUR-REPO</code></pre>
+        </li>
+        <li>
+          <h2>Install the Python dependency and build</h2>
+          <p>Run these commands from the repository folder, which contains <code>build.py</code>.</p>
+          <p>On macOS or Linux:</p>
+          <pre><code>python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python build.py --all</code></pre>
+          <p>On Windows:</p>
+          <pre><code>py -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe build.py --all</code></pre>
+          <p>The first build downloads Lean dependencies and may take a while.
+            Open <code>main.html</code> or <code>main.pdf</code> in each template's
+            <code>documents/article/build/</code>, <code>documents/book/build/</code>,
+            or <code>documents/slides/build/</code> folder.</p>
+          <p>Edit the corresponding <code>main.typ</code> file in <code>documents/</code>
+            and put your Lean code in <code>LeanProject/LeanProject/Basic.lean</code>.
+            To rebuild when files change, run:</p>
+          <pre><code>.venv/bin/python build.py --watch --all</code></pre>
+          <p>On Windows, replace <code>.venv/bin/python</code> with
+            <code>.venv\Scripts\python.exe</code>. Leave the command running while you
+            edit, refresh the HTML in your browser after a rebuild, and press
+            <code>Ctrl+C</code> to stop it.</p>
+        </li>
+      </ol>
+    </section>
+  </main>
+  <footer>
+    <span>&copy; 2026 Shreyas Srinivas</span>
+    <a href="LICENSE.txt">Apache License 2.0</a>
+  </footer>
+</body>
+</html>
