@@ -14,14 +14,21 @@ This tool exists because I refuse to learn verso. I already learnt markdown, lat
 
 ## Samples
 
-No setup is needed to view these samples. Download an HTML file and open it in
-your browser to use the interactive Lean tooltips, or open a PDF to read or print it.
+Visit the [sample website](https://shreyas4991.github.io/TypstVerso/) or open a
+document below. The HTML examples run directly in your browser with interactive
+Lean tooltips; the PDFs are available for reading or printing. No installation
+is needed to view these compiled examples.
 
 | Template | HTML | PDF |
 | --- | --- | --- |
-| Article | [HTML](documents/article/build/main.html) | [PDF](documents/article/build/main.pdf) |
-| Book | [HTML](documents/book/build/main.html) | [PDF](documents/book/build/main.pdf) |
-| Slides | [HTML](documents/slides/build/main.html) | [PDF](documents/slides/build/main.pdf) |
+| Article | [HTML](https://shreyas4991.github.io/TypstVerso/documents/article/build/main.html) | [PDF](https://shreyas4991.github.io/TypstVerso/documents/article/build/main.pdf) |
+| Book | [HTML](https://shreyas4991.github.io/TypstVerso/documents/book/build/main.html) | [PDF](https://shreyas4991.github.io/TypstVerso/documents/book/build/main.pdf) |
+| Slides | [HTML](https://shreyas4991.github.io/TypstVerso/documents/slides/build/main.html) | [PDF](https://shreyas4991.github.io/TypstVerso/documents/slides/build/main.pdf) |
+
+The website updates automatically when changes to these compiled samples or
+`index.html` are pushed to `main`. After editing a template, run
+`.venv/bin/python build.py --all` and commit its updated HTML and PDF files to
+refresh the published examples.
 
 ## First Time Setup
 

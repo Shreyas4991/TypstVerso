@@ -1,0 +1,95 @@
+<!doctype html>
+<!--
+Copyright 2026 Shreyas Srinivas
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore article, book, and slide templates combining Lean proofs with Typst. Read interactive HTML examples or open the PDFs.">
+  <title>Lean + Typst — Sample documents</title>
+  <style>
+    * { box-sizing: border-box; }
+    html { color-scheme: light; }
+    body { margin: 0; background: #faf9f6; color: #242c2b; font: 17px/1.65 system-ui, sans-serif; }
+    main, footer { width: min(100% - 40px, 840px); margin-inline: auto; }
+    header { padding: 76px 0 36px; }
+    .project { margin: 0 0 16px; color: #52615d; font-size: 14px; letter-spacing: .08em; }
+    h1 { margin: 0 0 20px; font-size: clamp(32px, 6vw, 50px); line-height: 1.15; letter-spacing: -.04em; }
+    header p { max-width: 650px; }
+    a { color: #176958; text-underline-offset: 4px; }
+    a:hover { color: #103e35; }
+    a:focus-visible { outline: 3px solid #176958; outline-offset: 5px; border-radius: 2px; }
+    .source { display: inline-block; margin-top: 8px; }
+    article { display: grid; grid-template-columns: 120px 1fr auto; align-items: baseline; gap: 24px; padding: 28px 0; border-top: 1px solid #d9dfda; }
+    h2 { margin: 0; font-size: 22px; font-weight: 600; }
+    article p { margin: 0; color: #52615d; font-size: 16px; }
+    .links { display: flex; flex-wrap: wrap; gap: 16px; white-space: nowrap; }
+    .links a { font-size: 16px; }
+    .note { margin: 12px 0 0; padding-top: 24px; border-top: 1px solid #d9dfda; color: #52615d; font-size: 15px; }
+    footer { display: flex; flex-wrap: wrap; gap: 8px 24px; padding-block: 48px 32px; color: #52615d; font-size: 14px; }
+    @media (max-width: 640px) {
+      header { padding-top: 44px; }
+      article { grid-template-columns: 1fr; gap: 8px; }
+      .links { margin-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="project">TypstVerso</p>
+      <h1>Write with Lean and Typst.</h1>
+      <p>Lean checks the proofs. Typst makes the pages. Explore three sample
+        documents with interactive types, documentation, and proof states.</p>
+      <a class="source" href="https://github.com/Shreyas4991/TypstVerso">Get the templates on GitHub &rarr;</a>
+    </header>
+    <section aria-label="Sample documents">
+      <article>
+        <h2>Article</h2>
+        <p>A short checked argument, from a definition to a proof and its intermediate goals.</p>
+        <div class="links">
+          <a href="documents/article/build/main.html" aria-label="Read the article in HTML">Read HTML &rarr;</a>
+          <a href="documents/article/build/main.pdf" aria-label="Open the article PDF">PDF</a>
+        </div>
+      </article>
+      <article>
+        <h2>Book</h2>
+        <p>A chapter-based introduction with a table of contents and interactive Lean examples.</p>
+        <div class="links">
+          <a href="documents/book/build/main.html" aria-label="Read the book in HTML">Read HTML &rarr;</a>
+          <a href="documents/book/build/main.pdf" aria-label="Open the book PDF">PDF</a>
+        </div>
+      </article>
+      <article>
+        <h2>Slides</h2>
+        <p>A presentation with checked declarations, proof states, and Lean command output.</p>
+        <div class="links">
+          <a href="documents/slides/build/main.html" aria-label="View the slides in HTML">Read HTML &rarr;</a>
+          <a href="documents/slides/build/main.pdf" aria-label="Open the slides PDF">PDF</a>
+        </div>
+      </article>
+    </section>
+    <p class="note">No installation is needed to view these compiled examples.
+      In the HTML examples, hover over Lean names
+      to see their types and documentation, or inspect the proof-state bubbles.
+      Use the PDF links for reading or printing.</p>
+  </main>
+  <footer>
+    <span>&copy; 2026 Shreyas Srinivas</span>
+    <a href="LICENSE.txt">Apache License 2.0</a>
+  </footer>
+</body>
+</html>
