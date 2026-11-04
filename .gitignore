@@ -1,6 +1,17 @@
 .venv/
 __pycache__/
 build/
+# Include the finished samples while ignoring other generated build files.
+!/documents/article/build/
+!/documents/book/build/
+!/documents/slides/build/
+/documents/*/build/*
+!/documents/article/build/main.html
+!/documents/article/build/main.pdf
+!/documents/book/build/main.html
+!/documents/book/build/main.pdf
+!/documents/slides/build/main.html
+!/documents/slides/build/main.pdf
 LeanProject/.lake/
 typst/lean.json
 typst/.build.lock
