@@ -2,7 +2,7 @@
 import argparse
 from pathlib import Path
 
-from playwright.sync_api import expect, sync_playwright
+from playwright.sync_api import TimeoutError as BrowserTimeout, expect, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -49,8 +49,20 @@ def check_hover_and_scroll(page, url, kind):
         page.wait_for_timeout(350)
         expect(tooltip).to_be_visible()
         assert tooltip.evaluate("el => el.scrollHeight > el.clientHeight")
+        page.evaluate("""() => {
+          window.lastWheelTarget = null;
+          addEventListener("wheel", event => {
+            window.lastWheelTarget = event.target.id || event.target.tagName;
+          }, {capture: true, once: true});
+        }""")
         page.mouse.wheel(0, 300)
-        page.wait_for_function("document.getElementById('tooltip').scrollTop > 0")
+        try:
+            page.wait_for_function("document.getElementById('tooltip').scrollTop > 0", timeout=5000)
+        except BrowserTimeout as error:
+            details = tooltip.evaluate("""el => ({hidden: el.hidden, hovered: el.matches(":hover"),
+              scrollTop: el.scrollTop, scrollHeight: el.scrollHeight, clientHeight: el.clientHeight,
+              bounds: el.getBoundingClientRect().toJSON(), wheelTarget: window.lastWheelTarget})""")
+            raise AssertionError(f"{kind} popup did not scroll: {details}") from error
         expect(tooltip).to_be_visible()
         page.mouse.move(0, 0)
         expect(tooltip).to_be_hidden()

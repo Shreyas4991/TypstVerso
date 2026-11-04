@@ -1,7 +1,7 @@
 "use strict";
 const leanTooltips = (() => {
   const tooltip = document.getElementById("tooltip");
-  let pinned = false, active = null, hoveringTooltip = false, hideTimer = null;
+  let pinned = false, active = null, activeRegion = null, hoveringTooltip = false, hideTimer = null;
   function cancelHide() {
     clearTimeout(hideTimer);
     hideTimer = null;
@@ -23,11 +23,14 @@ const leanTooltips = (() => {
       active.removeAttribute("aria-describedby");
     }
     active = null;
+    activeRegion = null;
   }
   function show(button, region) {
     if (pinned) return;
-    close();
+    if (active === button) cancelHide();
+    else close();
     active = button;
+    activeRegion = region;
     button.classList.add("active");
     button.setAttribute("aria-describedby", "tooltip");
     tooltip.textContent = region.tooltip;
@@ -81,11 +84,23 @@ const leanTooltips = (() => {
   tooltip.addEventListener("pointerleave", () => { hoveringTooltip = false; hideSoon(); });
   tooltip.addEventListener("focus", cancelHide);
   tooltip.addEventListener("blur", hideSoon);
+  tooltip.addEventListener("wheel", event => {
+    if (event.ctrlKey || !event.deltaY || tooltip.scrollHeight <= tooltip.clientHeight) return;
+    // Keep docstring scrolling inside the popup, even in a scrolling reader.
+    const unit = event.deltaMode === 1 ? parseFloat(getComputedStyle(tooltip).lineHeight)
+      : event.deltaMode === 2 ? tooltip.clientHeight : 1;
+    event.preventDefault();
+    hoveringTooltip = true;
+    cancelHide();
+    tooltip.scrollTop += event.deltaY * unit;
+  }, {passive: false});
   addEventListener("keydown", event => { if (event.key === "Escape") close(); });
   addEventListener("click", event => { if (!tooltip.contains(event.target)) close(); });
   addEventListener("resize", close);
   addEventListener("scroll", () => {
-    if (!pinned && !hoveringTooltip && !tooltip.matches(":focus-within")) close();
+    if (pinned || hoveringTooltip || tooltip.matches(":focus-within")) return;
+    if (active && active.matches(":hover")) show(active, activeRegion);
+    else close();
   }, {passive: true});
   return {close, mount};
 })();
