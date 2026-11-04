@@ -5,7 +5,8 @@
     outline: 1px solid #89949f; outline-offset: 2px; border-radius: 999px; background: transparent;
   }
   #tooltip { position: fixed; z-index: 10; margin: 0; padding: 16px; max-width: min(650px, calc(100vw - 24px));
-    max-height: min(65vh, 520px); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+    max-height: min(65vh, 520px); overflow: auto; overscroll-behavior: contain;
+    white-space: pre-wrap; overflow-wrap: anywhere;
     background: #f8fafc; color: #1f2937; border: 1px solid #93a4ba; border-radius: 8px;
     box-shadow: 0 8px 32px #0006; font: var(--lean-tooltip-size, 20px)/1.5 "DejaVu Sans Mono", Menlo, monospace; }
   #tooltip[hidden] { display: none; }

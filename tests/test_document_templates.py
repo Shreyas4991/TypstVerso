@@ -3,6 +3,7 @@ import importlib.util
 import json
 from pathlib import Path
 import re
+import tempfile
 import unittest
 
 from pypdf import PdfReader
@@ -52,10 +53,41 @@ class DocumentTemplates(unittest.TestCase):
         for kind in ("article", "book"):
             self.assertIn('id="pages"', self.outputs[kind][0])
             self.assertNotIn('id="stage"', self.outputs[kind][0])
-        self.assertIn('id="page-links"', self.outputs["book"][0])
+        self.assertIn('id="table-of-contents"', self.outputs["book"][0])
+        self.assertNotIn('id="page-links"', self.outputs["book"][0])
         book = self.outputs["book"][2]
         self.assertGreaterEqual(len(book.pages), 4)
         self.assertIn("Contents", book.pages[1].extract_text())
+
+    def test_contents_uses_numbered_headings_and_exact_section_positions(self):
+        headings = [h for page in self.outputs["book"][1] for h in page["headings"]]
+        self.assertEqual([h["title"] for h in headings], [
+            "1 From definitions to proofs", "1.1 A first definition",
+            "1.2 A proof with two branches", "2 Reading the proof interactively",
+            "2.1 Intermediate goals", "2.2 Asking Lean questions"])
+        self.assertEqual([h["level"] for h in headings], [1, 2, 2, 1, 2, 2])
+        self.assertEqual(len({h["id"] for h in headings}), len(headings))
+        self.assertEqual(headings[1]["page"], headings[2]["page"])
+        self.assertLess(headings[1]["y"], headings[2]["y"])
+
+    def test_contents_handles_styled_and_unnumbered_headings_and_empty_documents(self):
+        with tempfile.TemporaryDirectory(prefix="contents-check-") as temporary:
+            directory = Path(temporary)
+            entry = directory / "main.typ"
+            for source, expected in [
+                ('#set heading(numbering: "1.1")\n= A *rich* #emph[chapter]\n'
+                 '== Second section\n#heading(numbering: none)[Unnumbered]\n'
+                 '#heading(outlined: false)[Hidden]\n',
+                 ["1 A rich chapter", "1.1 Second section", "Unnumbered"]),
+                ("A document without headings.", []),
+            ]:
+                entry.write_text(source)
+                builder = build.Builder(document=directory, library=directory, kind="book", formats="html")
+                builder.export(entry)
+                html = (builder.output / "main.html").read_text()
+                pages = json.loads(re.search(
+                    r'<script[^>]*type="application/json"[^>]*>(.*?)</script>', html, re.S).group(1))
+                self.assertEqual([h["title"] for p in pages for h in p["headings"]], expected)
 
     def test_code_and_goal_tokens_inherit_each_document_font_size(self):
         widths = {}

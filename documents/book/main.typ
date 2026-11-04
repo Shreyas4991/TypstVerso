@@ -1,6 +1,6 @@
 #import "../../typst/lean.typ": lean-quote, lean-state, lean-command
 
-#set document(title: "An introduction to checked arguments", author: "Your Name")
+#set document(title: [An introduction to checked arguments], author: "Your Name")
 #set page(paper: "iso-b5", margin: (x: 18mm, y: 20mm), numbering: "1")
 #set text(size: 10pt)
 #set par(justify: true)

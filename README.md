@@ -31,7 +31,7 @@ typst/
 templates/html/
   slides.html                    slide navigation and fullscreen presentation
   article.html                   scrolling article reader
-  book.html                      scrolling book reader with page navigation
+  book.html                      scrolling book reader with a table of contents
   reader.js                      shared article/book page rendering
   tooltips.js                    shared Lean token and proof-state popups
   tooltips.css                   shared popup styles
@@ -70,8 +70,13 @@ python3 build.py --document documents/article --format html --watch
 
 Open the selected document's `build/main.html` directly in a browser. Slides use
 arrow-key navigation; articles and books display all pages in a scrolling reader.
+The book's sidebar uses Typst's outlined chapter and section headings, with links
+to their exact positions, including multiple sections on the same page.
 Hover or focus a name or proof-state bubble to see its information; click to pin
-a popup and press Escape to dismiss it. The HTML needs no server or network.
+a popup and press Escape to dismiss it. Popups appear above or below the hovered
+text. Move into a popup to keep it open and scroll long documentation; it closes
+after leaving both the source and popup unless pinned. The HTML needs no server
+or network.
 
 ## Writing quotations
 
@@ -188,3 +193,11 @@ appearance depends on the viewer.
 The tests exercise actual Lean/SubVerso and Typst, including multiline proof
 states, semantic hover data, computed requests, cold and cached builds, incremental
 additions, missing-data recovery, and preservation of successful output after errors.
+They also compile all three samples and check separate output folders and inherited
+font sizes. An optional browser smoke check uses Playwright and an installed Google
+Chrome to test navigation, tooltip pinning, mobile layout, and offline loading:
+
+```sh
+.venv/bin/python -m pip install playwright
+.venv/bin/python tests/check_html.py
+```

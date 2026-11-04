@@ -289,13 +289,39 @@ class Builder:
             })'''
             regions = json.loads(self.typst(["eval", expression, "--in", entry]))
             if self.formats in {"html", "both"}:
+                # Ask Typst for outlined headings and their final locations, including
+                # computed chapter numbers; never infer a contents list from page text.
+                outline_expression = '''
+                  let plain(body) = {
+                    if type(body) == str { body }
+                    else if type(body) == content {
+                      if (body.func() == [ ].func() or body.func() == linebreak
+                        or body.func() == parbreak or body.func() == h) { " " }
+                      else if body.has("text") { body.text }
+                      else if body.has("children") { body.children.map(plain).join() }
+                      else if body.has("body") { plain(body.body) }
+                      else { "" }
+                    } else { "" }
+                  }
+                  query(heading).filter(h => h.outlined).map(h => {
+                    let p = h.location().position()
+                    let n = if h.numbering == none { "" }
+                      else { plain(numbering(h.numbering, ..counter(heading).at(h.location()))) }
+                    (level: h.level, title: if n == "" { plain(h.body) }
+                      else { n + " " + plain(h.body) },
+                      page: p.page, y: p.y.pt())
+                  })'''
+                headings = json.loads(self.typst(["eval", outline_expression, "--in", entry]))
+                for index, heading in enumerate(headings, 1):
+                    heading["id"] = f"heading-{index}"
                 pages = []
                 svgs = sorted(directory.glob("page-*.svg"), key=lambda p: int(p.stem.split("-")[-1]))
                 for number, svg in enumerate(svgs, 1):
                     markup = svg.read_text()
                     width, height = re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', markup).groups()
                     pages.append({"svg": markup, "width": float(width), "height": float(height),
-                                  "regions": [r for r in regions if r["page"] == number]})
+                                  "regions": [r for r in regions if r["page"] == number],
+                                  "headings": [h for h in headings if h["page"] == number]})
                 template = (self.templates / (self.kind + ".html")).read_text()
                 for marker, name in (("__TOOLTIPS_CSS__", "tooltips.css"),
                                      ("__TOOLTIPS_JS__", "tooltips.js"),
