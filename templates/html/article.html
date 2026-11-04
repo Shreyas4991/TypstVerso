@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>__TITLE__ — Article</title>
+  <style>
+    __TOOLTIPS_CSS__
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #edf0f4; color: #263242; font: 15px system-ui, sans-serif; }
+    header { max-width: 850px; margin: auto; padding: 24px 16px; display: flex; align-items: baseline; gap: 16px; }
+    header h1 { font-size: 18px; margin: 0; }
+    header p { margin: 0; color: #526174; }
+    #pages { max-width: 850px; margin: 0 auto 32px; padding: 0 16px; display: grid; gap: 24px; }
+    .page { position: relative; background: white; box-shadow: 0 3px 20px #182a4018; scroll-margin-top: 16px; }
+    .page > svg { display: block; width: 100%; height: 100%; }
+    @media print { header, #tooltip, .hover { display: none; } body { background: white; } #pages { padding: 0; max-width: none; gap: 0; } .page { box-shadow: none; break-after: page; } }
+  </style>
+</head>
+<body>
+  <header><h1>Article</h1><p id="page-count"></p></header>
+  <main id="pages" aria-label="Article pages"></main>
+  <pre id="tooltip" role="tooltip" hidden></pre>
+  <script type="application/json" id="document-data">__DOCUMENT_DATA__</script>
+  <script>__TOOLTIPS_JS__</script>
+  <script>__READER_JS__</script>
+</body>
+</html>

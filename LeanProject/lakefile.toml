@@ -1,0 +1,23 @@
+name = "LeanProject"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["LeanProject"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+#relaxedAutoImplicit = false
+#weak.linter.mathlibStandardSet = true
+#maxSynthPendingDepth = 3
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.35.0"
+
+[[require]]
+name = "subverso"
+git = "https://github.com/leanprover/subverso.git"
+rev = "892d6dc520270b5fb8c1291dd1b131e8c16255ed"
+
+[[lean_lib]]
+name = "LeanProject"

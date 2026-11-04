@@ -1,0 +1,157 @@
+diff --git a/ExtractModule.lean b/ExtractModule.lean
+index c222389..00bd906 100644
+--- a/ExtractModule.lean
++++ b/ExtractModule.lean
+@@ -20,6 +20,10 @@ MOD is the name of a Lean module, and OUT is the destination of the JSON.
+ If OUT is not specified, the JSON is emitted to standard output.
+ 
+ OPTS may be:
++  --declaration NAME
++    Highlight only the command defining NAME (may be repeated). The whole module
++    is still elaborated so the command retains its original context.
++
+   --suppress-namespace NS
+     Suppress the showing of namespace NS in metadata
+ 
+@@ -74,13 +78,16 @@ partial def commandKind (cmd : Syntax) : SyntaxNodeKind :=
+   | `(command|$_cmd1 in $cmd2) => commandKind cmd2
+   | _ => cmd.getKind
+ 
+-unsafe def go (asServer : Bool) (suppressedNamespaces : Array Name) (mod : String) (out : IO.FS.Stream) : IO UInt32 := do
++unsafe def go (asServer : Bool) (suppressedNamespaces : Array Name) (declarations : Array Name)
++    (mod : String) (out : IO.FS.Stream) : IO UInt32 := do
+   try
+     initSearchPath (← findSysroot)
+     let modName := mod.toName
+ 
+     let sp ← Compat.initSrcSearchPath
+-    let sp : SearchPath := (sp : List System.FilePath) ++ [("." : System.FilePath)]
++    let root ← findSysroot
++    let sp : SearchPath := (sp : List System.FilePath) ++
++      [root / "src" / "lean" / "lake", root / "src" / "lean", ("." : System.FilePath)]
+     let fname ← do
+       if let some fname ← sp.findModuleWithExt "lean" modName then
+         pure fname
+@@ -108,6 +115,19 @@ unsafe def go (asServer : Bool) (suppressedNamespaces : Array Name) (mod : Strin
+ 
+     let res := res.updateLeading contents
+ 
++    -- Imported quotations need only their defining commands. In bootstrap modules,
++    -- highlighting unrelated later commands can require constants not available
++    -- in that module's environment (for example, coeNotation in Init.Prelude).
++    let res ← if declarations.isEmpty then pure res else do
++      let positions ← Frontend.runCommandElabM (declarations.mapM fun name => do
++        let some ranges ← findDeclarationRanges? name
++          | throwError "No source range found for {name}"
++        pure (fm.ofPosition ranges.selectionRange.pos)) pctx cmdSt
++      pure { res with items := res.items.filter fun item =>
++        match item.commandSyntax.getRange? with
++        | some ⟨start, stop⟩ => positions.any (fun pos => start ≤ pos && pos < stop)
++        | none => false }
++
+     let hls ← (Frontend.runCommandElabM <| liftTermElabM <| Highlighting.highlightFrontendResult res (suppressNamespaces := suppressedNamespaces.toList)) pctx cmdSt
+ 
+     let items : Array ModuleItem := hls.zip res.syntax |>.map fun (hl, stx) => {
+@@ -128,41 +148,44 @@ unsafe def go (asServer : Bool) (suppressedNamespaces : Array Name) (mod : Strin
+ structure Config where
+   asServer : Bool
+   suppressedNamespaces : Array Name := #[]
++  declarations : Array Name := #[]
+   mod : String
+   outFile : Option String := none
+ 
+-def Config.fromArgs (args : List String) : IO Config := go true #[] args
++def Config.fromArgs (args : List String) : IO Config := go true #[] #[] args
+ where
+-  go (asServer : Bool) (nss : Array Name) : List String → IO Config
++  go (asServer : Bool) (nss declarations : Array Name) : List String → IO Config
++    | "--declaration" :: name :: more =>
++      go asServer nss (declarations.push name.toName) more
+     | "--suppress-namespace" :: more =>
+       if let ns :: more := more then
+-        go asServer (nss.push ns.toName) more
++        go asServer (nss.push ns.toName) declarations more
+       else
+         throw <| .userError "No namespace given after --suppress-namespace"
+     | "--suppress-namespaces" :: more => do
+       if let file :: more := more then
+         let contents ← IO.FS.readFile file
+         let nss' := Compat.String.splitToList contents (·.isWhitespace) |>.filter (!·.isEmpty) |>.map (·.toName)
+-        go asServer (nss ++ nss') more
++        go asServer (nss ++ nss') declarations more
+       else
+         throw <| .userError "No namespace file given after --suppress-namespaces"
+     | "--not-server" :: more => do
+-      go false nss more
+-    | [mod] => pure { asServer, suppressedNamespaces := nss, mod }
+-    | [mod, outFile] => pure { asServer, suppressedNamespaces := nss, mod, outFile := some outFile }
++      go false nss declarations more
++    | [mod] => pure { asServer, suppressedNamespaces := nss, declarations, mod }
++    | [mod, outFile] => pure { asServer, suppressedNamespaces := nss, declarations, mod, outFile := some outFile }
+     | other => throw <| .userError s!"Didn't understand remaining arguments: {other}"
+ 
+ unsafe def main (args : List String) : IO UInt32 := do
+   try
+-    let { asServer, suppressedNamespaces, mod, outFile } ← Config.fromArgs args
++    let { asServer, suppressedNamespaces, declarations, mod, outFile } ← Config.fromArgs args
+     match outFile with
+     | none =>
+-      go asServer suppressedNamespaces mod (← IO.getStdout)
++      go asServer suppressedNamespaces declarations mod (← IO.getStdout)
+     | some outFile =>
+       if let some p := (outFile : System.FilePath).parent then
+         IO.FS.createDirAll p
+       IO.FS.withFile outFile .write fun h =>
+-        go asServer suppressedNamespaces mod (.ofHandle h)
++        go asServer suppressedNamespaces declarations mod (.ofHandle h)
+   catch e =>
+     if args.isEmpty then
+       IO.eprintln s!"No arguments provided."
+diff --git a/src/SubVerso/Highlighting/Code.lean b/src/SubVerso/Highlighting/Code.lean
+index 8fa0a12..190c9f9 100644
+--- a/src/SubVerso/Highlighting/Code.lean
++++ b/src/SubVerso/Highlighting/Code.lean
+@@ -1598,16 +1598,25 @@ partial def findTactics'
+     : HighlightM (Option (Array (Highlighted.Goal Highlighted) × Compat.String.Pos × Compat.String.Pos)) := do
+ 
+   if let some res := (← readThe InfoTable).tacticInfo? stx then
++    -- A combinator can evaluate the same source tactic once per goal. Keep the latest
++    -- info for each invocation, rather than keeping only the last goal's invocation.
++    let mut invocations : Array (List MVarId × Array (Highlighted.Goal Highlighted)) := #[]
+     for (ci, tacticInfo) in res.reverse do
++      if invocations.any (·.1 == tacticInfo.goalsBefore) then continue
+       if !before && !tacticInfo.goalsBefore.isEmpty && tacticInfo.goalsAfter.isEmpty then
+-        return some (#[], startPos, endPos)
++        invocations := invocations.push (tacticInfo.goalsBefore, #[])
++        continue
+ 
+       let goals := if before then tacticInfo.goalsBefore else tacticInfo.goalsAfter
+       let ci := {ci with mctx := if before then tacticInfo.mctxBefore else tacticInfo.mctxAfter}
+       if goals.isEmpty then continue
+       let goalView ← highlightGoals ci goals
+ 
+-      if !Output.inTacticState (← get).output goalView then
++      invocations := invocations.push (tacticInfo.goalsBefore, goalView)
++
++    if !invocations.isEmpty then
++      let goalView := invocations.reverse.flatMap (·.2)
++      if goalView.isEmpty || !Output.inTacticState (← get).output goalView then
+         return some (goalView, startPos, endPos)
+ 
+   return none
+@@ -1677,6 +1686,15 @@ partial def findTactics
+   -- `;` is blacklisted  - no need to highlight states identically
+   if stx matches .atom _ ";" then return none
+ 
++  -- Show the goals entering an all_goals block immediately after its keyword.
++  -- The nested tactic spans below show the result for every invocation.
++  if stx matches .atom _ "all_goals" then
++    for t in trees do
++      for (_, info) in infoIncludingSyntax t stx |>.reverse do
++        if let .ofTacticInfo ti := info then
++          if ti.stx.getKind == ``Lean.Parser.Tactic.allGoals && ti.stx[0] == stx then
++            return ← findTactics' ti.stx startPos endPos (before := true)
++
+   -- Place the initial proof state after the `by` token
+   if stx matches .atom _ "by" then
+     for t in trees do

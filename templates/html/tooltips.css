@@ -1,0 +1,11 @@
+  .hover { position: absolute; border: 0; padding: 0; margin: 0; background: transparent; color: transparent; cursor: help; }
+  .hover:focus-visible, .hover.active { outline: 2px solid #60a5fa; border-radius: 3px; background: #60a5fa22; }
+  .hover[data-role="state"] { cursor: pointer; }
+  .hover[data-role="state"]:focus-visible, .hover[data-role="state"].active {
+    outline: 1px solid #89949f; outline-offset: 2px; border-radius: 999px; background: transparent;
+  }
+  #tooltip { position: fixed; z-index: 10; margin: 0; padding: 16px; max-width: min(650px, calc(100vw - 24px));
+    max-height: min(65vh, 520px); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+    background: #f8fafc; color: #1f2937; border: 1px solid #93a4ba; border-radius: 8px;
+    box-shadow: 0 8px 32px #0006; font: var(--lean-tooltip-size, 20px)/1.5 "DejaVu Sans Mono", Menlo, monospace; }
+  #tooltip[hidden] { display: none; }

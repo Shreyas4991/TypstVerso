@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__ — Lean slides</title>
+<style>
+  __TOOLTIPS_CSS__
+  * { box-sizing: border-box; }
+  body { --lean-tooltip-size: 28px; margin: 0; background: #171b22; color: #eff3f8; font: 15px system-ui, sans-serif; }
+  main { min-height: 100dvh; display: grid; place-content: center; gap: 16px; justify-items: center; }
+  #stage { position: relative; background: white; box-shadow: 0 12px 60px #0006; }
+  #stage > svg { display: block; width: 100%; height: 100%; }
+  nav { display: flex; gap: 14px; align-items: center; }
+  nav button { background: #303846; border: 1px solid #64748b; border-radius: 5px; color: inherit; padding: 6px 12px; cursor: pointer; }
+  nav button:disabled { opacity: 0.35; cursor: default; }
+  #hint { color: #bdc7d5; font-size: 12px; }
+  @media (max-width: 600px) { #hint { display: none; } }
+</style>
+<main>
+  <div id="stage" role="region" aria-label="Presentation slide"></div>
+  <nav aria-label="Slide navigation">
+    <button id="previous" aria-label="Previous slide">←</button>
+    <span id="counter" aria-live="polite"></span>
+    <button id="next" aria-label="Next slide">→</button>
+    <button id="fullscreen">Full screen</button>
+    <span id="hint">Hover for Lean info · click to pin · Esc to close</span>
+  </nav>
+</main>
+<pre id="tooltip" role="tooltip" hidden></pre>
+<script type="application/json" id="document-data">__DOCUMENT_DATA__</script>
+<script>__TOOLTIPS_JS__</script>
+<script>
+  "use strict";
+  const slides = JSON.parse(document.getElementById("document-data").textContent);
+  const stage = document.getElementById("stage");
+  const previous = document.getElementById("previous"), next = document.getElementById("next");
+  let index = Math.max(0, Math.min(slides.length - 1, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+  function resize() {
+    const ratio = slides[index].width / slides[index].height;
+    stage.style.width = Math.min(innerWidth - 32, (innerHeight - 90) * ratio) + "px";
+    stage.style.aspectRatio = String(ratio);
+  }
+  function render() {
+    leanTooltips.close();
+    const slide = slides[index];
+    leanTooltips.mount(stage, slide);
+    document.getElementById("counter").textContent = `${index + 1} / ${slides.length}`;
+    previous.disabled = index === 0;
+    next.disabled = index === slides.length - 1;
+    history.replaceState(null, "", "#" + (index + 1));
+    resize();
+  }
+  function move(delta) { index = Math.max(0, Math.min(slides.length - 1, index + delta)); render(); }
+  previous.addEventListener("click", () => move(-1));
+  next.addEventListener("click", () => move(1));
+  document.getElementById("fullscreen").addEventListener("click", async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch (_) { document.getElementById("hint").textContent = "Use your browser’s full-screen command."; }
+  });
+  addEventListener("keydown", event => {
+    if (event.key === "Escape") leanTooltips.close();
+    else if (!event.altKey && !event.ctrlKey && !event.metaKey) {
+      if (["ArrowRight", "PageDown"].includes(event.key)) { event.preventDefault(); move(1); }
+      if (["ArrowLeft", "PageUp"].includes(event.key)) { event.preventDefault(); move(-1); }
+      if (event.key === "Home") { index = 0; render(); }
+      if (event.key === "End") { index = slides.length - 1; render(); }
+    }
+  });
+  addEventListener("resize", () => { leanTooltips.close(); resize(); });
+  addEventListener("hashchange", () => { index = Math.max(0, Math.min(slides.length - 1, (parseInt(location.hash.slice(1), 10) || 1) - 1)); render(); });
+  render();
+</script>
+</html>
