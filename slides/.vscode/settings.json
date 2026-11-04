@@ -1,7 +1,0 @@
-{
-  "lean4.input.languages": [
-    "lean4",
-    "lean",
-    "typst"
-  ]
-}
