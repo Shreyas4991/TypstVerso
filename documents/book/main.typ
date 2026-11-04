@@ -80,3 +80,5 @@ Here's a simple graph in mathlib
 Here's the type of the function that gets its neighbor set for a given vertex `v`
 
 #lean-command("#check SimpleGraph.neighborSet")
+
+#lean-command("#check Nat")

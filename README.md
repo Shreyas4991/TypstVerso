@@ -2,6 +2,15 @@
 
 This tool exists because I refuse to learn verso. I already learnt markdown, latex, and typst. I wanted to make lean code slides a la verso, without actually writing verso. If you want to see the results, go to the `documents` folder, open one of the three variants of documents I have set up as a template (article/book/slides), open the `build` subfolder, and check out the html and pdf in your own browser/pdf-reader. I first put this together for lecture slides. Then I absolutely used AI to clean up the mess and create a template. This repo is absolutely AI-pilled. Use at your own discretion. 
 
+## Contents
+
+- [First-time setup](#set-up-the-template)
+- [Second time onwards](#second-time-onwards)
+- [Where to begin writing](#where-to-begin-writing)
+- [Update the documents as you write](#update-the-documents-as-you-write)
+- [How the code works](ImplementationNotes.md)
+- [AI disclosure](#ai-disclosure)
+
 ## Set up the template
 
 ### 1. Install the tools
@@ -17,6 +26,9 @@ Install these tools on your computer:
 
 Open this folder in the app you use to edit text files. I used vscode. I have the lean extension and tinymist already installed. You should be able to see a file called  `build.py` 
 
+
+A terminal is a window for typing commands. Open one in the folder containing
+`build.py`. Run the commands below there.
 
 ### 3. Prepare Python
 
@@ -53,6 +65,28 @@ a while. Wait until the command finishes.
 
 Each sample has its own `build/` folder. Open `main.html` there to read it in your
 browser, or `main.pdf` to read or print it.
+
+## Second time onwards
+
+You only need to do the setup once. When you come back to the project:
+
+1. Open the template folder in your editor.
+2. Open a terminal in that folder. It should contain `build.py`.
+3. Run this command:
+
+```sh
+.venv/bin/python build.py --watch --all
+```
+
+On Windows, use:
+
+```powershell
+.venv\Scripts\python.exe build.py --watch --all
+```
+
+This makes all three documents, then updates them when you save changes.
+Leave the terminal open while you write. Refresh your browser to see the changes.
+Press `Ctrl+C` in the terminal when you want to stop.
 
 ## Where to begin writing
 
@@ -100,7 +134,7 @@ To **watch** means to leave the program running so it notices saved changes and
 builds the documents again. To watch all three documents, run:
 
 ```sh
-.venv/bin/python build.py --all --watch
+.venv/bin/python build.py --watch --all
 ```
 
 Or watch just the article:
