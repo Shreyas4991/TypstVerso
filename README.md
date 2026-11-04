@@ -1,6 +1,6 @@
 # Write with Lean and Typst
 
-This tool exists because I refuse to learn verso. I already learnt markdown, latex, and typst. I wanted to make lean code slides a la verso, without actually writing verso. If you want to see the results, go to the `documents` folder, open one of the three variants of documents I have set up as a template (article/book/slides), open the `build` subfolder, and check out the html and pdf in your own browser/pdf-reader. I first put this together for lecture slides. Then I absolutely used AI to clean up the mess and create a template. This repo is absolutely AI-pilled. Use at your own discretion. 
+This tool exists because I refuse to learn verso. I already learnt markdown, latex, and typst. I wanted to make lean code slides a la verso, without actually writing verso. If you want to see the results, go to the `documents` folder, open one of the three variants of documents I have set up as a template (article/book/slides), open the `build` subfolder, and check out the html and pdf in your own browser/pdf-reader. I first put this together for lecture slides. Then I absolutely used AI to clean up the mess and create a template. This repo is AI-pilled. Use at your own discretion. I am of course happy to accept bug reports and pull requests.
 
 ## Contents
 
