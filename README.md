@@ -19,6 +19,9 @@ document below. The HTML examples run directly in your browser with interactive
 Lean tooltips; the PDFs are available for reading or printing. No installation
 is needed to view these compiled examples.
 
+PDF tooltip rendering depends heavily on the PDF reader. The HTML version is
+likely to render tooltips more reliably.
+
 | Template | HTML | PDF |
 | --- | --- | --- |
 | Article | [HTML](https://shreyas4991.github.io/TypstVerso/documents/article/build/main.html) | [PDF](https://shreyas4991.github.io/TypstVerso/documents/article/build/main.pdf) |
@@ -32,32 +35,51 @@ refresh the published examples.
 
 ## First Time Setup
 
-### 1. Install the tools
+### 1. Check the required installations
 
 Install these tools on your computer:
 
-- [Lean](https://lean-lang.org/install/) checks your proofs. Follow its setup guide.
-- [Typst](https://typst.app/open-source/) makes the finished pages. Use version 0.15 or later.
-- [Python](https://www.python.org/downloads/) runs the included `build.py` program. Use version 3.9 or later.
-- [Git](https://git-scm.com/downloads/) downloads the Lean files this template needs.
+- [Lean](https://lean-lang.org/install/), including elan and Lake.
+- [Typst](https://typst.app/open-source/) 0.15 or later.
+- [Python](https://www.python.org/downloads/) 3.9 or later.
+- [Git](https://git-scm.com/downloads/).
 
-### 2. Open this folder
+Check that these commands work in your terminal:
 
-Open this folder in the app you use to edit text files. I used vscode. I have the lean extension and tinymist already installed. You should be able to see a file called  `build.py` 
+```sh
+lean --version
+lake --version
+typst --version
+python3 --version
+git --version
+```
 
+On Windows, use `py --version` for Python. If a command is missing, complete
+that tool's installation before continuing.
 
-A terminal is a window for typing commands. Open one in the folder containing
-`build.py`. Run the commands below there.
+### 2. Create a repository from the template
 
-### 3. Prepare Python
+On [GitHub](https://github.com/Shreyas4991/TypstVerso), select **Use this template →
+Create a new repository**. Choose an owner and name, then create the repository.
 
-Run these two commands once to install the Python files this project needs.
+Clone your new repository and enter its folder. Replace `YOUR-USER` and
+`YOUR-REPO` below:
+
+```sh
+git clone https://github.com/YOUR-USER/YOUR-REPO.git
+cd YOUR-REPO
+```
+
+### 3. Install the Python dependency and build
+
+Run these commands from the repository folder, which contains `build.py`.
 
 On macOS or Linux:
 
 ```sh
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python build.py --all
 ```
 
 On Windows:
@@ -65,22 +87,14 @@ On Windows:
 ```powershell
 py -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe build.py --all
 ```
 
 In the remaining commands, Windows users should replace `.venv/bin/python` with
 `.venv\Scripts\python.exe`.
 
-### 4. Make all the sample documents
-
-Here, **build** means turn your writing into finished files. To build all three
-samples, run:
-
-```sh
-.venv/bin/python build.py --all
-```
-
-The first run downloads files, so it needs an internet connection and may take
-a while. Wait until the command finishes.
+The first build downloads Lean dependencies, so it needs an internet connection
+and may take a while. Wait until the command finishes.
 
 Each sample has its own `build/` folder. Open `main.html` there to read it in your
 browser, or `main.pdf` to read or print it.
