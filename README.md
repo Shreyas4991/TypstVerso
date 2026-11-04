@@ -1,17 +1,29 @@
 # Write with Lean and Typst
 
-This tool exists because I refuse to learn verso. I already learnt markdown, latex, and typst. I wanted to make lean code slides a la verso, without actually writing verso. If you want to see the results, go to the `documents` folder, open one of the three variants of documents I have set up as a template (article/book/slides), open the `build` subfolder, and check out the html and pdf in your own browser/pdf-reader. I first put this together for lecture slides. Then I absolutely used AI to clean up the mess and create a template. This repo is AI-pilled. Use at your own discretion. I am of course happy to accept bug reports and pull requests.
+This tool exists because I refuse to learn verso. I already learnt markdown, latex, and typst. I wanted to make lean code slides a la verso, without actually writing verso. If you want to see the results, check out the HTML and PDF files in [Samples](#samples). I first put this together for lecture slides. Then I absolutely used AI to clean up the mess and create a template. This repo is AI-pilled. Use at your own discretion. I am of course happy to accept bug reports and pull requests.
 
 ## Contents
 
-- [First-time setup](#set-up-the-template)
+- [Samples](#samples)
+- [First-time setup](#first-time-setup)
 - [Second time onwards](#second-time-onwards)
 - [Where to begin writing](#where-to-begin-writing)
 - [Update the documents as you write](#update-the-documents-as-you-write)
 - [How the code works](ImplementationNotes.md)
 - [AI disclosure](#ai-disclosure)
 
-## Set up the template
+## Samples
+
+No setup is needed to view these samples. Download an HTML file and open it in
+your browser to use the interactive Lean tooltips, or open a PDF to read or print it.
+
+| Template | HTML | PDF |
+| --- | --- | --- |
+| Article | [HTML](documents/article/build/main.html) | [PDF](documents/article/build/main.pdf) |
+| Book | [HTML](documents/book/build/main.html) | [PDF](documents/book/build/main.pdf) |
+| Slides | [HTML](documents/slides/build/main.html) | [PDF](documents/slides/build/main.pdf) |
+
+## First Time Setup
 
 ### 1. Install the tools
 
