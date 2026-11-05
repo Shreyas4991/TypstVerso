@@ -12,6 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import "@preview/ctheorems:1.1.3": thmplain, thmproof, thmrules
+
+// Shared theorem and proof environments for blog posts.
+#let theorem = thmplain(
+  "blog-theorem", "Theorem",
+  base: none,
+  titlefmt: strong, bodyfmt: emph,
+)
+
+#let proof = thmproof("blog-proof", "Proof Sketch")
+
 // Dates are set by the author, never inferred from file modification times.
 #let blog-date(year, month, day) = datetime(year: year, month: month, day: day)
 
@@ -25,6 +36,7 @@
 }
 
 #let blog(title: [Mathematical notes], author: "Your Name", posts) = {
+  show: thmrules
   set document(title: title, author: author)
   set page(paper: "iso-b5", margin: (x: 18mm, y: 20mm), numbering: none)
   set text(size: 10pt)
