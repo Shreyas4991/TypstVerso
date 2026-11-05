@@ -189,8 +189,8 @@ and add `my-theorem.post` to the `#blog((...))` collection.
 Import order does not matter: the template sorts posts
 by their dates, latest first, in both HTML and PDF. Posts on the same date keep
 their import order. Each post starts on a new page with its title and date.
-The linked index lists post titles without page numbers; the HTML sidebar lists
-only posts, leaving section headings within each post out of the index.
+The blog opens directly with the latest post. The HTML sidebar lists post titles
+without page numbers, leaving section headings within each post out of the index.
 
 Put new Lean formalizations inside `namespace Demo` in
 `LeanProject/LeanProject/Basic.lean`, then quote them as `Demo.my_theorem`.

@@ -23,7 +23,7 @@ class BlogTemplate(unittest.TestCase):
         entry.write_text('#import "blog.typ": blog, blog-post, blog-date\n' + source)
         return build.Builder(document=directory, library=directory, kind="blog"), entry
 
-    def test_dates_sort_posts_and_linked_index_across_years_with_stable_ties(self):
+    def test_dates_sort_posts_across_years_with_stable_ties(self):
         posts = [
             ("December", (2025, 12, 1)),
             ("New year first", (2026, 1, 1)),
@@ -49,11 +49,12 @@ class BlogTemplate(unittest.TestCase):
             self.assertNotRegex(html, r"__[A-Z_]+__")
 
             pdf = PdfReader(builder.output / "main.pdf")
-            index = pdf.pages[0].extract_text()
-            positions = [index.index(title) for title in expected]
-            self.assertEqual(positions, sorted(positions))
-            self.assertNotIn("A section inside", index)
-            self.assertEqual(len(pdf.pages[0]["/Annots"]), len(expected))
+            self.assertEqual(len(pdf.pages), len(expected))
+            self.assertEqual([h["page"] for h in headings], list(range(1, len(expected) + 1)))
+            first_page = pdf.pages[0].extract_text()
+            self.assertTrue(first_page.startswith(expected[0]))
+            self.assertIn("Body of " + expected[0], first_page)
+            self.assertNotIn("Mathematical notes", first_page)
             for heading in headings:
                 text = pdf.pages[heading["page"] - 1].extract_text()
                 self.assertIn(heading["title"], text)
@@ -66,13 +67,13 @@ class BlogTemplate(unittest.TestCase):
             for page in pdf.pages:
                 self.assertNotRegex(page.extract_text(), r"(?m)^\d+$")
 
-    def test_empty_blog_has_an_empty_index(self):
+    def test_empty_blog_has_no_introductory_content(self):
         with tempfile.TemporaryDirectory(prefix="blog-empty-") as temporary:
             builder, entry = self.make_builder(temporary, '#blog(())')
             builder.export(entry)
             pdf = PdfReader(builder.output / "main.pdf")
             self.assertEqual(len(pdf.pages), 1)
-            self.assertIn("Posts", pdf.pages[0].extract_text())
+            self.assertFalse(pdf.pages[0].extract_text().strip())
 
     def test_each_post_requires_a_title_and_date(self):
         for source, message in [

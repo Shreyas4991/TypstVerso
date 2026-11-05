@@ -230,10 +230,11 @@ The blog uses the same heading positions and interactive rendering as the book.
 Each file in `documents/blog/posts/` exports a `post` made with `blog-post`, with a
 manually chosen `blog-date(year, month, day)`. The collection in `main.typ` is
 sorted by descending calendar date before typesetting, so PDF pages, SVG pages,
-and both indexes agree. Equal dates retain import order. Post titles use level-one
-headings; the HTML sidebar filters out deeper section headings. The typeset index
-uses direct links to post headings, with no page references. The blog disables
-heading and page numbering and omits the HTML page count.
+and the sidebar index agree. Equal dates retain import order. Post titles use
+level-one headings; the HTML sidebar filters out deeper section headings.
+Both HTML and PDF open directly with the latest post, without an introductory
+title or index page. The blog disables heading and page numbering and omits
+the HTML page count.
 
 All HTML layouts use the same tooltip code and styles. The popup is placed above
 or below its triggering region and its height is limited to the available space.

@@ -47,20 +47,6 @@
     it
   }
 
-  text(size: 27pt, weight: "bold", title)
-  parbreak()
-  author
-  parbreak()
-  v(1cm)
-  text(size: 16pt, weight: "bold")[Posts]
-  parbreak()
-  // Linked titles only: no chapter numbers, dot leaders, or page references.
-  context {
-    for post in query(heading.where(level: 1)).filter(h => h.outlined) {
-      block(link(post.location(), post.body))
-    }
-  }
-
   // A negative calendar key gives latest-first order and keeps equal-date posts
   // in their source order because Typst's sort is stable.
   let ordered = posts.sorted(key: post => -(
