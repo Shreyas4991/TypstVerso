@@ -31,12 +31,13 @@ def check_hover_and_scroll(page, url, kind):
         page.goto(url + ("#" + str(index + 1) if index is not None else ""))
         selector = page.evaluate("""({index, kind}) => {
           const data = JSON.parse(document.getElementById("document-data").textContent);
+          const name = kind === "blog" ? "Demo.prime_above" : "Demo.identity_pair";
           let number = index;
           if (number === null) number = data.findLastIndex(p =>
-            p.regions.some(r => r.tooltip.includes("Demo.identity_pair")));
+            p.regions.some(r => r.tooltip.includes(name)));
           const source = data[number];
           const region = index === null
-            ? source.regions.findLastIndex(r => r.tooltip.includes("Demo.identity_pair"))
+            ? source.regions.findLastIndex(r => r.tooltip.includes(name))
             : source.regions.findIndex(r => r.tooltip);
           source.regions[region].tooltip += "\\n" + "A long documentation line.\\n".repeat(100);
           const container = kind === "slides" ? "#stage" : "#page-" + (number + 1);
@@ -93,7 +94,7 @@ def main():
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(channel="chrome", headless=True)
         try:
-            for kind in ("slides", "article", "book"):
+            for kind in ("slides", "article", "book", "blog"):
                 page = browser.new_page(viewport={"width": 1280, "height": 900})
                 errors, network = [], []
                 page.on("pageerror", lambda error: errors.append(str(error)))
@@ -107,6 +108,21 @@ def main():
                     expect(page.locator("#counter")).to_have_text("2 / 4")
                 else:
                     assert page.locator(".page").count() >= 2
+                    if kind == "blog":
+                        contents = page.get_by_role("navigation", name="Blog posts")
+                        expect(contents.locator("a")).to_have_text([
+                            "There are infinitely many primes", "Every double is even", "Swapping two summands"])
+                        expect(contents.locator("ol ol")).to_have_count(0)
+                        expect(page.locator("#page-count")).to_have_count(0)
+                        link = contents.locator("a").last
+                        href = link.get_attribute("href")
+                        link.click()
+                        assert page.evaluate("location.hash") == href
+                        page.wait_for_function(
+                            "Math.abs(document.querySelector(location.hash).getBoundingClientRect().top - 24) < 2")
+                        page.reload()
+                        page.wait_for_function(
+                            "Math.abs(document.querySelector(location.hash).getBoundingClientRect().top - 24) < 2")
                     if kind == "book":
                         contents = page.get_by_role("navigation", name="Table of contents")
                         heading_count = page.evaluate("""() => JSON.parse(

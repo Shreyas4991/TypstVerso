@@ -33,7 +33,7 @@ PROJECT = ROOT / "LeanProject"
 DOCUMENT = ROOT / "documents/slides"
 LIBRARY = ROOT / "typst"
 TEMPLATES = ROOT / "templates/html"
-DOCUMENT_KINDS = ("slides", "article", "book")
+DOCUMENT_KINDS = ("slides", "article", "book", "blog")
 BUILD = DOCUMENT / "build"
 MODULES = ["LeanProject"]
 REQUEST_PREFIX = "LEAN_REQUEST:"
@@ -447,6 +447,7 @@ class Builder:
                 template = (self.templates / (self.kind + ".html")).read_text()
                 for marker, name in (("__TOOLTIPS_CSS__", "tooltips.css"),
                                      ("__TOOLTIPS_JS__", "tooltips.js"),
+                                     ("__BLOG_JS__", "blog.js"),
                                      ("__READER_JS__", "reader.js")):
                     if marker in template:
                         template = template.replace(marker, (self.templates / name).read_text())
@@ -563,7 +564,7 @@ def main(argv=None):
     parser.add_argument("--project", type=Path, default=PROJECT)
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument("--document", type=Path, default=DOCUMENT)
-    selection.add_argument("--all", action="store_true", help="Build slides, article, and book")
+    selection.add_argument("--all", action="store_true", help="Build slides, article, book, and blog")
     parser.add_argument("--output", type=Path, help="Output directory (default: DOCUMENT/build)")
     parser.add_argument("--library", type=Path, default=LIBRARY, help="Shared lean.typ and extraction cache")
     parser.add_argument("--templates", type=Path, default=TEMPLATES, help="HTML template directory")

@@ -48,13 +48,19 @@ documents/
   article/build/                 main.html and main.pdf for the article
   book/main.typ                  sample B5 book with contents and chapters (10pt)
   book/build/                    main.html and main.pdf for the book
+  blog/main.typ                  collection of dated posts, sorted latest first
+  blog/posts/                    one Typst file per post (title, date, body)
+  blog/build/                    main.html and main.pdf for the blog
 typst/
   lean.typ                       shared quotation and proof-state rendering
+  blog.typ                       blog-date, blog-post, and sorted blog layout
   lean.json                      generated extraction data and cache
 templates/html/
   slides.html                    slide navigation and fullscreen presentation
   article.html                   scrolling article reader
   book.html                      scrolling book reader with a table of contents
+  blog.html                      book-style reader with a latest-first post index
+  blog.js                        blog rendering and post-only navigation
   reader.js                      shared article/book page rendering
   tooltips.js                    shared Lean token and proof-state popups
   tooltips.css                   shared popup styles
@@ -154,7 +160,7 @@ Watch mode stays running so fixing the input triggers another build. It does not
 automatically reload browser tabs.
 
 All extraction data and cache bookkeeping live in **one generated JSON file**,
-`typst/lean.json`, shared by slides, articles, and books. SubVerso output,
+`typst/lean.json`, shared by slides, articles, books, and blogs. SubVerso output,
 resolved-name maps, and intermediate command
 results pass directly between programs through their standard input and output, without being saved as files. Hover coordinates are embedded in the
 HTML and PDF; no region JSON file is produced. Lake's `lake-manifest.json` remains
@@ -170,8 +176,8 @@ temporary files are ignored when watching for edits.
 Additional commands:
 
 ```sh
-python3 build.py --all                   # build all three sample documents
-python3 build.py --all --watch           # watch all three document folders
+python3 build.py --all                   # build all four sample documents
+python3 build.py --all --watch           # watch all four document folders
 python3 build.py --all --format html     # HTML only; no Python packages required
 python3 build.py --refresh --format html  # regenerate requested Lean data
 python3 build.py --extract-only          # refresh data for a Typst editor preview
@@ -184,21 +190,22 @@ python3 build.py --module LeanProject --module Lean  # additional import environ
 The document and Lean roots can be changed with `--document` and `--project`;
 `--output` overrides that document's build directory. The HTML layout is inferred
 from the document folder name, or selected explicitly with `--template slides`,
-`--template article`, or `--template book`. Custom folder names default to the
+`--template article`, `--template book`, or `--template blog`. Custom folder names default to the
 article reader. `--library` and `--templates` override the shared resource folders.
 Watch mode also watches the shared Typst display code and HTML templates.
 
-`--all` builds `documents/slides`, `documents/article`, and `documents/book`
+`--all` builds `documents/slides`, `documents/article`, `documents/book`, and
+`documents/blog`
 sequentially, preserving their separate output directories and shared cache.
 `--all --refresh` discards the cache once before the first document, so subsequent
 documents can reuse and extend the newly extracted data. With `--all --output DIR`,
-each document's output goes into `DIR/slides`, `DIR/article`, or `DIR/book`.
-`--all --watch` watches all three document folders and the shared inputs together;
-a change triggers a rebuild of all three. Failed documents are reported while the
+each document's output goes into `DIR/slides`, `DIR/article`, `DIR/book`, or `DIR/blog`.
+`--all --watch` watches all four document folders and the shared inputs together;
+a change triggers a rebuild of all four. Failed documents are reported while the
 other documents still build. A one-off run returns a nonzero exit code if any fail.
 
 The HTML exports embed the templates' scripts, styles, SVG pages, and hover data;
-no extra files need to be loaded when reading the document. Article/book HTML preserves the paginated
+no extra files need to be loaded when reading the document. Article/book/blog HTML preserves the paginated
 Typst layout using SVG, rather than rearranging the prose to fit the browser window.
 
 After extraction, normal Typst compilation works for typesetting. Set the project
@@ -219,6 +226,15 @@ numbering, plain-text titles, page numbers, and vertical positions in the HTML's
 embedded page data. The reader creates nested links and anchors at those positions,
 so different sections on one page can be targeted separately.
 
+The blog uses the same heading positions and interactive rendering as the book.
+Each file in `documents/blog/posts/` exports a `post` made with `blog-post`, with a
+manually chosen `blog-date(year, month, day)`. The collection in `main.typ` is
+sorted by descending calendar date before typesetting, so PDF pages, SVG pages,
+and both indexes agree. Equal dates retain import order. Post titles use level-one
+headings; the HTML sidebar filters out deeper section headings. The typeset index
+uses direct links to post headings, with no page references. The blog disables
+heading and page numbering and omits the HTML page count.
+
 All HTML layouts use the same tooltip code and styles. The popup is placed above
 or below its triggering region and its height is limited to the available space.
 A 200ms close delay lets the pointer cross the gap from source text to the popup.
@@ -235,7 +251,7 @@ pins its popup; Escape or a click outside dismisses it.
 The tests exercise actual Lean/SubVerso and Typst, including multiline proof
 states, Lean types and documentation shown on hover, computed requests, cold and cached builds, incremental
 additions, missing-data recovery, and preservation of successful output after errors.
-They also compile all three samples and check separate output folders and inherited
+They also compile all four samples and check separate output folders and inherited
 font sizes. An optional browser smoke check uses Playwright and an installed Google
 Chrome to test navigation, tooltip pinning, mobile layout, and offline loading:
 

@@ -31,10 +31,10 @@ class BuildAll(unittest.TestCase):
                 patch.object(build, "Builder") as constructor:
             self.assertEqual(build.main(["--all", "--refresh"]), 0)
             self.assertEqual([call.args[1].name for call in constructor.call_args_list],
-                             ["slides", "article", "book"])
-            self.assertEqual([call.args[4] for call in constructor.call_args_list], [True, False, False])
+                             ["slides", "article", "book", "blog"])
+            self.assertEqual([call.args[4] for call in constructor.call_args_list], [True, False, False, False])
             self.assertTrue(all(call.args[2] is None for call in constructor.call_args_list))
-            self.assertEqual(constructor.return_value.build.call_count, 3)
+            self.assertEqual(constructor.return_value.build.call_count, 4)
 
     def test_output_override_keeps_documents_in_separate_folders(self):
         with tempfile.TemporaryDirectory() as temporary, \
@@ -47,9 +47,9 @@ class BuildAll(unittest.TestCase):
     def test_one_failed_document_does_not_stop_the_others(self):
         with patch.object(build, "watch_snapshot", return_value=[]), \
                 patch.object(build, "Builder") as constructor:
-            constructor.return_value.build.side_effect = [RuntimeError("bad slides"), None, None]
+            constructor.return_value.build.side_effect = [RuntimeError("bad slides"), None, None, None]
             self.assertEqual(build.main(["--all"]), 1)
-            self.assertEqual(constructor.return_value.build.call_count, 3)
+            self.assertEqual(constructor.return_value.build.call_count, 4)
 
     def test_watch_rebuilds_all_after_a_change_and_skips_unchanged_inputs(self):
         with patch.object(build, "watch_snapshot", side_effect=[[1], [1], [2], [2]]) as snapshot, \
@@ -57,9 +57,9 @@ class BuildAll(unittest.TestCase):
                 patch.object(build.time, "sleep", side_effect=[None, None, None, KeyboardInterrupt]):
             with self.assertRaises(KeyboardInterrupt):
                 build.main(["--all", "--watch"])
-            self.assertEqual(constructor.return_value.build.call_count, 6)
+            self.assertEqual(constructor.return_value.build.call_count, 8)
             self.assertEqual([call.args[1].name for call in constructor.call_args_list],
-                             ["slides", "article", "book"] * 2)
+                             ["slides", "article", "book", "blog"] * 2)
             self.assertEqual(snapshot.call_args.args[1],
                              [ROOT / "documents" / kind for kind in build.DOCUMENT_KINDS])
 

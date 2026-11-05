@@ -27,6 +27,7 @@ likely to render tooltips more reliably.
 | Article | [HTML](https://shreyas4991.github.io/TypstVerso/documents/article/build/main.html) | [PDF](https://shreyas4991.github.io/TypstVerso/documents/article/build/main.pdf) |
 | Book | [HTML](https://shreyas4991.github.io/TypstVerso/documents/book/build/main.html) | [PDF](https://shreyas4991.github.io/TypstVerso/documents/book/build/main.pdf) |
 | Slides | [HTML](https://shreyas4991.github.io/TypstVerso/documents/slides/build/main.html) | [PDF](https://shreyas4991.github.io/TypstVerso/documents/slides/build/main.pdf) |
+| Blog | [HTML](https://shreyas4991.github.io/TypstVerso/documents/blog/build/main.html) | [PDF](https://shreyas4991.github.io/TypstVerso/documents/blog/build/main.pdf) |
 
 The website updates automatically when changes are pushed to `main`.
 After editing a template, run
@@ -119,7 +120,7 @@ On Windows, use:
 .venv\Scripts\python.exe build.py --watch --all
 ```
 
-This makes all three documents, then updates them when you save changes.
+This makes all four documents, then updates them when you save changes.
 Leave the terminal open while you write. Refresh your browser to see the changes.
 Press `Ctrl+C` in the terminal when you want to stop.
 
@@ -132,6 +133,7 @@ Choose the file for the kind of document you want to write:
 | Slides | [documents/slides/main.typ](documents/slides/main.typ) | `documents/slides/build/` |
 | An article | [documents/article/main.typ](documents/article/main.typ) | `documents/article/build/` |
 | A book | [documents/book/main.typ](documents/book/main.typ) | `documents/book/build/` |
+| A blog | [documents/blog/main.typ](documents/blog/main.typ) | `documents/blog/build/` |
 
 Replace the sample text with your own writing. Keep the first `#import` lines;
 they let your document use Lean examples and its page style.
@@ -161,12 +163,42 @@ To build just one document, use the matching command:
 
 # Book
 .venv/bin/python build.py --document documents/book
+
+# Blog
+.venv/bin/python build.py --document documents/blog
 ```
+
+### Writing blog posts
+
+Keep each post in its own file under `documents/blog/posts/`. Copy a sample post
+and set its title and date with `blog-post` and `blog-date(year, month, day)`:
+
+```typst
+#import "../../../typst/blog.typ": blog-date, blog-post
+#import "../../../typst/lean.typ": lean-quote
+
+#let post = blog-post(title: [My theorem], date: blog-date(2026, 11, 6))[
+  Explain the theorem here.
+
+  #lean-quote("Demo.double_is_even")
+]
+```
+
+In `documents/blog/main.typ`, add `#import "posts/my-theorem.typ" as my-theorem`
+and add `my-theorem.post` to the `#blog((...))` collection.
+Import order does not matter: the template sorts posts
+by their dates, latest first, in both HTML and PDF. Posts on the same date keep
+their import order. Each post starts on a new page with its title and date.
+The linked index lists post titles without page numbers; the HTML sidebar lists
+only posts, leaving section headings within each post out of the index.
+
+Put new Lean formalizations inside `namespace Demo` in
+`LeanProject/LeanProject/Basic.lean`, then quote them as `Demo.my_theorem`.
 
 ## Update the documents as you write
 
 To **watch** means to leave the program running so it notices saved changes and
-builds the documents again. To watch all three documents, run:
+builds the documents again. To watch all four documents, run:
 
 ```sh
 .venv/bin/python build.py --watch --all
@@ -178,7 +210,7 @@ Or watch just the article:
 .venv/bin/python build.py --document documents/article --watch
 ```
 
-Replace `article` with `slides` or `book` to watch either of those instead.
+Replace `article` with `slides`, `book`, or `blog` to watch one of those instead.
 
 Leave the terminal open. Save a `.typ` file to update the finished documents.
 Refresh your browser to see the result. Press `Ctrl+C` in the terminal to stop.

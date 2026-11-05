@@ -41,7 +41,7 @@ class DocumentTemplates(unittest.TestCase):
             match = re.search(r'<script[^>]*type="application/json"[^>]*>(.*?)</script>', html, re.S)
             cls.outputs[kind] = (html, json.loads(match.group(1)), PdfReader(builder.output / "main.pdf"))
 
-    def test_samples_have_separate_outputs_and_equivalent_lean_content(self):
+    def test_samples_have_separate_outputs_and_interactive_lean_content(self):
         for kind, (html, pages, pdf) in self.outputs.items():
             with self.subTest(kind=kind):
                 builder = self.builders[kind]
@@ -50,7 +50,10 @@ class DocumentTemplates(unittest.TestCase):
                 self.assertEqual(len(pdf.pages), len(pages))
                 self.assertGreaterEqual(sum(len(p["regions"]) for p in pages), 53)
                 text = "\n".join(page.extract_text() for page in pdf.pages)
-                for fragment in ("hello", "identity_pair", "all_goals", "intro h", "exact h"):
+                fragments = ("addition_commutes", "double_is_even", "prime_above",
+                             "infinitely_many_primes", "lia") if kind == "blog" else (
+                                 "hello", "identity_pair", "all_goals", "intro h", "exact h")
+                for fragment in fragments:
                     self.assertIn(fragment, text)
                 self.assertTrue(any(r["role"] == "state" and r["tooltip"] == "No goals"
                                     for p in pages for r in p["regions"]))
@@ -64,7 +67,7 @@ class DocumentTemplates(unittest.TestCase):
     def test_browser_layout_matches_document_type(self):
         self.assertIn('id="stage"', self.outputs["slides"][0])
         self.assertNotIn('id="pages"', self.outputs["slides"][0])
-        for kind in ("article", "book"):
+        for kind in ("article", "book", "blog"):
             self.assertIn('id="pages"', self.outputs[kind][0])
             self.assertNotIn('id="stage"', self.outputs[kind][0])
         self.assertIn('id="table-of-contents"', self.outputs["book"][0])
@@ -106,7 +109,8 @@ class DocumentTemplates(unittest.TestCase):
     def test_code_and_goal_tokens_inherit_each_document_font_size(self):
         widths = {}
         goal_widths = {}
-        for kind, (_, pages, _) in self.outputs.items():
+        for kind in ("slides", "article", "book"):
+            _, pages, _ = self.outputs[kind]
             tokens = [r for p in pages for r in p["regions"] if r["role"] == "token"]
             widths[kind] = next(r["width"] for r in tokens if "Demo.hello" in r["tooltip"])
             goal_widths[kind] = [r["width"] for r in tokens if r["tooltip"] == "Prop"]
